@@ -115,6 +115,45 @@ async def add_product(category: str, name: str, price: float):
     return {"message": "Product added successfully", "product": product}
 
 
+@app.put("/products/{product_id}")
+async def update_product(product_id: int, category: str = None, name: str = None, price: float = None):
+    """
+    Эндпоинт для редактирования существующего продукта по его идентификатору.
+
+    Аргументы:
+        product_id (int): Идентификатор продукта, который нужно редактировать.
+        category (str, optional): Новая категория продукта.
+        name (str, optional): Новое название продукта.
+        price (float, optional): Новая цена продукта.
+
+    Возвращаемое значение:
+        message (str): Сообщение об успешном редактировании продукта.
+        product (Product): Обновленный продукт.
+
+    Исключения:
+        HTTPException: Если продукт с данным ID не найден, будет возвращена ошибка 404.
+    """
+    with Session(engine) as session:
+        product = session.get(Product, product_id)
+
+        if not product:
+            raise HTTPException(status_code=404, detail="Product not found")
+
+        # Обновляем поля, если они переданы в запросе
+        if category is not None:
+            product.category = category
+        if name is not None:
+            product.name = name
+        if price is not None:
+            product.price = price
+
+        session.add(product)
+        session.commit()
+        session.refresh(product)
+
+    return {"message": f"Product with id {product_id} updated successfully", "product": product}
+
+
 @app.delete("/products/{product_id}")
 async def delete_product(product_id: int):
     """
